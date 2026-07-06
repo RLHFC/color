@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>色彩調和論 & PCCS 期末試験復習ツール</title>
+  <style>
+    /* ----------------------------------
+       Visual Design: Premium Minimalist
+       ---------------------------------- */
+    :root {
+      --bg-color: #fafafa;
+      --card-bg: #ffffff;
+      --text-main: #1a1a1a;
+      --text-muted: #666666;
+      --border-color: #e5e5e5;
+      --accent-correct: #10b981; /* Premium Emerald Green */
+      --accent-incorrect: #ef4444; /* Premium Rose Red */
+      --accent-neutral: #000000;
+      --hover-bg: #f9fafb;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      line-height: 1.6;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    /* Outer Container */
+    .app-container {
+      width: 100%;
+      max-width: 580px;
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 40px 30px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* Top Progress Navigation */
+    .progress-wrapper {
+      margin-bottom: 24px;
+    }
+
+    .progress-text {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .progress-bar-bg {
+      width: 100%;
+      height: 3px;
+      background-color: var(--border-color);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background-color: var(--accent-neutral);
+      width: 0%;
+      transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* Question Screen */
+    .question-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--text-main);
+      margin-bottom: 28px;
+      line-height: 1.5;
+    }
+
+    /* Options Stack */
+    .options-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 30px;
+    }
+
+    .option-btn {
+      background: none;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 16px 20px;
+      text-align: left;
+      font-size: 0.95rem;
+      color: var(--text-main);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .option-btn:hover:not(:disabled) {
+      background-color: var(--hover-bg);
+      border-color: #b5b5b5;
+    }
+
+    .option-btn:focus {
+      outline: none;
+    }
+
+    /* Feedback State Styling */
+    .option-btn.selected-correct {
+      border-color: var(--accent-correct);
+      background-color: rgba(16, 185, 129, 0.05);
+      color: var(--accent-correct);
+      font-weight: 600;
+    }
+
+    .option-btn.selected-incorrect {
+      border-color: var(--accent-incorrect);
+      background-color: rgba(239, 68, 68, 0.05);
+      color: var(--accent-incorrect);
+      font-weight: 600;
+    }
+
+    .option-btn.should-have-selected {
+      border-color: var(--accent-correct);
+      background-color: rgba(16, 185, 129, 0.03);
+      color: var(--accent-correct);
+    }
+
+    .option-btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+
+    /* Toast/Message Box */
+    .feedback-message {
+      margin-bottom: 24px;
+      padding: 14px 18px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .feedback-message.correct {
+      display: block;
+      background-color: rgba(16, 185, 129, 0.08);
+      border-left: 4px solid var(--accent-correct);
+      color: #065f46;
+    }
+
+    .feedback-message.incorrect {
+      display: block;
+      background-color: rgba(239, 68, 68, 0.08);
+      border-left: 4px solid var(--accent-incorrect);
+      color: #991b1b;
+    }
+
+    /* Minimal Button Style */
+    .action-btn {
+      background-color: var(--accent-neutral);
+      color: var(--card-bg);
+      border: none;
+      border-radius: 8px;
+      padding: 16px 24px;
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+    }
+
+    .action-btn:hover {
+      background-color: #333333;
+    }
+
+    /* Result Screen Frame */
+    .result-view {
+      text-align: center;
+      padding: 20px 0;
+    }
+
+    .result-score {
+      font-size: 3rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin: 16px 0;
+    }
+
+    .result-commentary {
+      font-size: 1rem;
+      color: var(--text-muted);
+      margin-bottom: 36px;
+      line-height: 1.6;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Responsive Adaptation */
+    @media(max-width: 480px) {
+      .app-container {
+        padding: 24px 16px;
+      }
+      .question-title {
+        font-size: 1.1rem;
+      }
+      .option-btn {
+        padding: 14px 16px;
+        font-size: 0.9rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container" id="app">
+    <!-- Dynamic interface will be injected here by Javascript -->
+  </div>
+
+  <script>
+    /* ==========================================
+       1. EXAM QUESTION DATABASE (Strictly PCCS)
+       ========================================== */
+    const originalQuestions = [
+      {
+        q: "「色の三属性」とは、色相、明度のほかに、色そのものが持つどの性質を指しますか？",
+        options: ["彩度", "トーン", "清色", "色調"],
+        correct: "彩度"
+      },
+      {
+        q: "三属性（色相・明度・彩度）の性質を「すべて」持っている色の総称はどれですか？",
+        options: ["有彩色", "無彩色", "純色", "中性色"],
+        correct: "有彩色"
+      },
+      {
+        q: "明度の性質「だけ」を持っている色の総称はどれですか？",
+        options: ["無彩色", "有彩色", "清色", "濁色"],
+        correct: "無彩色"
+      },
+      {
+        q: "無彩色の中で、黒は低明度色ですが、白はどのような明度の色に区分されますか？",
+        options: ["高明度色", "中明度色", "高彩度色", "低彩度色"],
+        correct: "高明度色"
+      },
+      {
+        q: "一つの色相を明度と彩度によって二次元の面に整理した図を何と呼びますか？",
+        options: ["等色相面", "色立体", "トーン体系", "色相環"],
+        correct: "等色相面"
+      },
+      {
+        q: "それぞれの色相の中で、最も「彩度が高い」色であり、トーンでいうと「ビビッド（vv）」にあたるものを何と呼びますか？",
+        options: ["純色", "清色", "濁色", "無彩色"],
+        correct: "純色"
+      },
+      {
+        q: "「純色と白」または「純色と黒」を混ぜ合わせた、比較的澄んだ表情を持った色を何と呼びますか？",
+        options: ["清色", "純色", "濁色", "無彩色"],
+        correct: "清色"
+      },
+      {
+        q: "純色にグレーを混ぜ合わせた、比較的「くすんだ表情」を持った色を何と呼びますか？",
+        options: ["濁色", "清色", "純色", "オフニュートラル"],
+        correct: "濁色"
+      },
+      {
+        q: "赤、黄、緑、青といった、いわゆる「色みの違い」のことを色彩用語で何と言いますか？",
+        options: ["色相", "彩度", "明度", "トーン"],
+        correct: "色相"
+      },
+      {
+        q: "明度と彩度の性質をあわせたもので、「色調」とも呼ばれる概念を何と言いますか？",
+        options: ["トーン", "色相", "色立体", "等色相面"],
+        correct: "トーン"
+      },
+      {
+        q: "色相環上で、正反対に位置する「180度反対の色相同士の関係」を何と言いますか？",
+        options: ["補色", "類似", "中差", "同一"],
+        correct: "補色"
+      },
+      {
+        q: "無彩色にきわめて近いものの、わずかに色みが含まれている色を何と言いますか？",
+        options: ["オフニュートラル", "濁色", "暗清色", "中途半端色"],
+        correct: "オフニュートラル"
+      },
+      {
+        q: "等色相面を色相環の順番（3次元的）に並べて組み立てられた立体を何と呼びますか？",
+        options: ["色立体", "等色相面", "トーンチャート", "色相面"],
+        correct: "色立体"
+      },
+      {
+        q: "配色理論における「調和」とは、どのような様子を指しますか？",
+        options: [
+          "異なった要素がつりあいよく組み合わさり、一体になった様子",
+          "同一の色相だけを集めて完全に変化をなくした様子",
+          "彩度を常に最高に保って対比を最も強く際立たせた様子",
+          "トーンの違いを排除して不快感を一切なくした様子"
+        ],
+        correct: "異なった要素がつりあいよく組み合わさり、一体になった様子"
+      },
+      {
+        q: "性格の「異なった」要素を組み合わせることで、その違いを際立たせ、変化や動感などの効果を得る調和を何と言いますか？",
+        options: ["対照の調和", "類似の調和（統一の調和）", "中差の調和", "同一の調和"],
+        correct: "対照の調和"
+      },
+      {
+        q: "「同一色相配色」や「類似色相配色」は、どの種類の調和に分類されますか？",
+        options: [
+          "類似の調和（または統一の調和）",
+          "対照の調和",
+          "補色による調和",
+          "無彩色の調和"
+        ],
+        correct: "類似の調和（または統一の調和）"
+      },
+      {
+        q: "10色相環において、「3〜4色相差」という組み合わせによる配色を何配色と呼びますか？",
+        options: ["対照色相配色", "中差色相配色", "類似色相配色", "同一色相配色"],
+        correct: "対照色相配色"
+      },
+      {
+        q: "類似の調和でも、対照の調和でもない「中途半端な配色」とされている色相配色は何ですか？",
+        options: ["中差色相配色", "類似色相配色", "対照色相配色", "補色色相配色"],
+        correct: "中差色相配色"
+      },
+      {
+        q: "対比の効果が最も強く、実際よりも鮮やかな印象が生まれる関係にある配色は何ですか？",
+        options: ["補色色相配色", "同一色相配色", "類似色相配色", "中差色相配色"],
+        correct: "補色色相配色"
+      },
+      {
+        q: "類似トーン配色をする場合、明清色同士、濁色同士のほかに、どの組み合わせが最もよくなじみますか？",
+        options: ["暗清色同士", "純色同士", "無彩色同士", "高彩度色同士"],
+        correct: "暗清色同士"
+      }
+    ];
+
+    /* ==========================================
+       2. QUIZ CONTROLLER & STATE
+       ========================================== */
+    let quizData = [];
+    let currentQuestionIndex = 0;
+    let score = 0;
+    let hasAnswered = false;
+
+    // Helper: Shuffle array elements
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    // Initialize/Reset Game State
+    function initQuiz() {
+      // Create a deep copy of original questions and shuffle them
+      quizData = originalQuestions.map(item => {
+        // Deep copy the options array as well to shuffle safely
+        const optionsCopy = [...item.options];
+        return {
+          q: item.q,
+          options: shuffle(optionsCopy),
+          correct: item.correct
+        };
+      });
+      shuffle(quizData); // Randomize question orders
+
+      currentQuestionIndex = 0;
+      score = 0;
+      hasAnswered = false;
+
+      renderQuestion();
+    }
+
+    /* ==========================================
+       3. RENDER LOGIC
+       ========================================== */
+    function renderQuestion() {
+      hasAnswered = false;
+      const appEl = document.getElementById('app');
+      const currentItem = quizData[currentQuestionIndex];
+      const progressPercent = ((currentQuestionIndex) / quizData.length) * 100;
+
+      appEl.innerHTML = `
+        <!-- Progress System -->
+        <div class="progress-wrapper">
+          <div class="progress-text">
+            <span>復習問題</span>
+            <span>${currentQuestionIndex + 1} / ${quizData.length}</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" style="width: ${progressPercent}%"></div>
+          </div>
+        </div>
+
+        <!-- Question Body -->
+        <div class="question-title">
+          ${currentItem.q}
+        </div>
+
+        <!-- Options Container -->
+        <div class="options-stack" id="options-container">
+          ${currentItem.options.map((option, index) => `
+            <button class="option-btn" onclick="handleOptionSelect('${option}', ${index})">
+              <span>${option}</span>
+            </button>
+          `).join('')}
+        </div>
+
+        <!-- Inline Message Banner -->
+        <div id="feedback-banner" class="feedback-message"></div>
+
+        <!-- Bottom Action Controller -->
+        <div id="action-wrapper" style="display: none;">
+          <button class="action-btn" onclick="handleNext()">
+            ${currentQuestionIndex === quizData.length - 1 ? '結果を確認する' : '次の問題へ'}
+          </button>
+        </div>
+      `;
+    }
+
+    /* ==========================================
+       4. INTERACTION & FEEDBACK LOGIC
+       ========================================== */
+    function handleOptionSelect(selectedOption, selectedIndex) {
+      if (hasAnswered) return;
+      hasAnswered = true;
+
+      const currentItem = quizData[currentQuestionIndex];
+      const isCorrect = (selectedOption === currentItem.correct);
+
+      if (isCorrect) {
+        score++;
+      }
+
+      // Render updated UI state immediately
+      const optionButtons = document.querySelectorAll('.option-btn');
+      const feedbackBanner = document.getElementById('feedback-banner');
+      const actionWrapper = document.getElementById('action-wrapper');
+
+      optionButtons.forEach((btn) => {
+        btn.disabled = true; // Disable further selections
+        const textContent = btn.querySelector('span').innerText;
+
+        if (textContent === currentItem.correct) {
+          btn.classList.add('should-have-selected');
+        }
+
+        if (textContent === selectedOption) {
+          if (isCorrect) {
+            btn.classList.add('selected-correct');
+            btn.innerHTML += ' <span>✓</span>';
+          } else {
+            btn.classList.add('selected-incorrect');
+            btn.innerHTML += ' <span>✗</span>';
+          }
+        }
+      });
+
+      // Display minimalist banner instead of native alert/popup
+      if (isCorrect) {
+        feedbackBanner.className = "feedback-message correct";
+        feedbackBanner.innerText = "正解です ✓";
+      } else {
+        feedbackBanner.className = "feedback-message incorrect";
+        feedbackBanner.innerText = `不正解 ✗ ( 正解: ${currentItem.correct} )`;
+      }
+
+      // Show action block
+      actionWrapper.style.display = 'block';
+    }
+
+    function handleNext() {
+      if (currentQuestionIndex < quizData.length - 1) {
+        currentQuestionIndex++;
+        renderQuestion();
+      } else {
+        showResults();
+      }
+    }
+
+    /* ==========================================
+       5. RESULT SCREEN
+       ========================================== */
+    function showResults() {
+      const appEl = document.getElementById('app');
+      const percentage = Math.round((score / quizData.length) * 100);
+      
+      let commentary = "";
+      if (percentage === 100) {
+        commentary = "完璧です！期末試験に向けて色彩理論は完全にマスタ―されています。";
+      } else if (percentage >= 80) {
+        commentary = "素晴らしい仕上がりです。間違えた部分をもう一度おさらいして万全を期しましょう。";
+      } else if (percentage >= 50) {
+        commentary = "基礎知識は身に付いています。配色の定義（類似/対照/中差）の細かな区分を再度復習してみましょう。";
+      } else {
+        commentary = "テキストや等色相面、トーン配置図をもう一度丁寧に読み返して、再挑戦してみましょう！";
+      }
+
+      appEl.innerHTML = `
+        <div class="result-view">
+          <div class="progress-text" style="justify-content: center; margin-bottom: 24px;">
+            <span>試験対策結果</span>
+          </div>
+          <div class="result-score">
+            ${score} / ${quizData.length}
+          </div>
+          <p style="font-size: 1.1rem; font-weight: 600; margin-bottom: 12px;">正解率 ${percentage}%</p>
+          <div class="result-commentary">
+            ${commentary}
+          </div>
+          <button class="action-btn" onclick="initQuiz()">最初からやり直す</button>
+        </div>
+      `;
+    }
+
+    // Launch App
+    window.onload = initQuiz;
+  </script>
+</body>
+</html>
